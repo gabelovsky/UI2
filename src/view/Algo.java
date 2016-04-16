@@ -8,33 +8,36 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
+import javafx.scene.control.Label;
+
 public class Algo {
 	
 	 public static final int GENE_C = 64;//don't change
-	
-	 
-	 public static final int ELITE_C = 2;
-	 public static final int NEW_C = 2;
-	 public static final int POP_C = 10;
+	 public static final int ELITE_C = 5;
+	 public static final int NEW_C = 5;
+	 public static final int POP_C = 50;
 	 public static final int FIRST_CROSS = 17;
 	 public static final int SECOND_CROSS = 47;
 	 
-    Population[] pop=new Population[POP_C];
+	 
+	 
+	Label result_text;
+    Population[] pop;
 	
 	int evo_poz;
 	Random rng = new Random(); 
+	boolean inited;
 	
-	//this for example
-	int package_c=5;
-	int x_size=7;
-	int y_size=7;
-	Point2D start_poz=new Point2D.Double(3,6);
+	int package_c;
+	int x_size;
+	int y_size;
+	Point2D start_poz;
 	Point2D curr_poz;
 	
 	List<Point2D> packages; 
 	List<Point2D> start_packages = new ArrayList<Point2D>(); 
 	
-	Algo(){
+	Algo(Label res){
 		//for example
 		start_packages.add(new Point2D.Double(1,4));
 		start_packages.add(new Point2D.Double(2,2));
@@ -45,32 +48,14 @@ public class Algo {
 		y_size=7;
 		package_c=5;
 		
-		/*
-		init_genes();//allocate genes to population
-		save_arr();//copy to temp_pop from population
-		get_fitness();//calculate fitness, destroys population
-		sort_pop();//sort based on fitness
-		
-		while(pop[0].fitness<package_c*1000){
-			System.out.println("Curr best:"+pop[0].fitness);
-		 evolve();//create new generation from temp_pop to population
-		 save_arr();//copy new generation to temp_pop from population
-		 get_fitness();//calculate fitness, destroys population
-		 sort_pop();//sort based on fitness
-		}
-		
-		for(int j=0;j<GENE_C;j++){
-			pop[0].population[j]=pop[0].temp_pop[j];
-		}
-		System.out.println("found it:"+pop[0].fitness);
-		print_best();
-		System.out.println(pop[0].fitness);
-		System.exit(0);*/
+		start_poz=new Point2D.Double(3,6);
+		inited=false;
+		result_text=res;
 	}
 	
 	
 	void init_genes(){
-		
+		pop=new Population[POP_C];
 		for(int i=0;i<POP_C;i++){
 			//allocate
 			pop[i]=new Population();
@@ -78,6 +63,7 @@ public class Algo {
 				pop[i].population[j]=rng.nextInt(256);
 		
 		}
+		inited=true;
 		
 	}
 	
@@ -150,10 +136,10 @@ public class Algo {
 					 return 0;
 				 }			 
 				 curr_poz.setLocation(curr_poz.getX(), curr_poz.getY()-1);
-				
+				 if(print)
+					 result_text.setText(result_text.getText()+"["+curr_poz.getX()+","+curr_poz.getY()+"] ");
 				 if(is_package(curr_poz)){
-					 if(print)
-						 System.out.print("["+curr_poz.getX()+","+curr_poz.getY()+"] ");
+					
 					 packages.remove(curr_poz);
 					 return 1000;
 				 }
@@ -165,10 +151,10 @@ public class Algo {
 					 return 0;
 				 }
 				 curr_poz.setLocation(curr_poz.getX()-1, curr_poz.getY());
-				
+				 if(print)
+					 result_text.setText(result_text.getText()+"["+curr_poz.getX()+","+curr_poz.getY()+"] ");
 				 if(is_package(curr_poz)){
-					 if(print)
-						 System.out.print("["+curr_poz.getX()+","+curr_poz.getY()+"] ");
+					
 					 packages.remove(curr_poz);
 					 return 1000;
 				 }
@@ -180,10 +166,10 @@ public class Algo {
 				 return 0;
 			 }
 			 curr_poz.setLocation(curr_poz.getX()+1, curr_poz.getY());
-			
+			 if(print)
+				 result_text.setText(result_text.getText()+"["+curr_poz.getX()+","+curr_poz.getY()+"] ");
 			 if(is_package(curr_poz)){
-				 if(print)
-					 System.out.print("["+curr_poz.getX()+","+curr_poz.getY()+"] ");
+				
 				 packages.remove(curr_poz);
 				 return 1000;
 			 }
@@ -194,10 +180,10 @@ public class Algo {
 				 return 0;
 			 }
 			 curr_poz.setLocation(curr_poz.getX(), curr_poz.getY()+1);
-			
+			 if(print)
+				 result_text.setText(result_text.getText()+"["+curr_poz.getX()+","+curr_poz.getY()+"] ");
 			 if(is_package(curr_poz)){
-				 if(print)
-					 System.out.print("["+curr_poz.getX()+","+curr_poz.getY()+"] ");
+				 
 				 packages.remove(curr_poz);
 				 return 1000;
 			 }
@@ -298,17 +284,23 @@ public class Algo {
 	}
 	
 	void print_best(){
+		for(int j=0;j<GENE_C;j++){
+			pop[0].population[j]=pop[0].temp_pop[j];
+		}
+		
 		packages= new ArrayList<Point2D>(start_packages);
 		curr_poz= new Point2D.Double(start_poz.getX(),start_poz.getY());
 		int curr_gene=0;
 		int gene_value;
+		int jump_c=0;
 		
 		pop[0].fitness=0;
-		while(pop[0].fitness<1000*package_c){
+		while(jump_c<500 &&pop[0].fitness<1000*package_c){
 			
 			if(curr_gene==GENE_C){
 				curr_gene=0;
 			}
+			jump_c++;
 			gene_value=pop[0].population[curr_gene];
 			//0-63 inc
 			if(gene_value<=63){	
